@@ -1,0 +1,32 @@
+{
+  "name": "urbansolv-intern",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "ts-node src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "db:init": "psql -U postgres -d urbansolv -f scripts/init-db.sql",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Marccel Janara",
+  "license": "ISC",
+  "dependencies": {
+    "@types/shapefile": "^0.6.4",
+    "body-parser": "^2.2.1",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "multer": "^2.0.2",
+    "pg": "^8.16.3",
+    "rimraf": "^6.1.2",
+    "shapefile": "^0.6.6",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
