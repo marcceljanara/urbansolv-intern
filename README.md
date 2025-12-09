@@ -99,8 +99,8 @@ Body: file (shapefile.zip)
   "data": {
     "featuresCount": 10,
     "geometryTypes": {
-      "Polygon": 8,
-      "Point": 2
+      "LineString": 8,
+      "MultiLineString": 2,
     }
   }
 }
@@ -150,10 +150,10 @@ Content-Type: application/json
 Body:
 {
   "properties": {
-    "name": "Updated Name"
+    "Kelas": 11
   },
   "geometry": {
-    "type": "Point",
+    "type": "LineString",
     "coordinates": [106.8, -6.2]
   }
 }
