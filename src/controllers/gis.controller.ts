@@ -160,6 +160,7 @@ export class GisController {
         return;
       }
 
+      // Partial update - merge with existing data
       const updatedFeature = await GisService.updateFeature(id, properties, geometry);
 
       if (!updatedFeature) {
@@ -172,7 +173,7 @@ export class GisController {
 
       res.status(200).json({
         success: true,
-        message: 'Feature updated successfully',
+        message: 'Feature updated successfully (partial update)',
         data: updatedFeature
       });
     } catch (error: any) {

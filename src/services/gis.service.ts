@@ -87,48 +87,68 @@ export class GisService {
     }
   }
 
-  static async updateFeature(
+static async updateFeature(
     id: number,
     properties?: Record<string, any>,
     geometry?: any
   ): Promise<GeoJSONFeature | null> {
+    const client = await db.connect();
+    
     try {
-      const updates: string[] = [];
-      const values: any[] = [];
-      let paramIndex = 1;
+      await client.query('BEGIN');
 
+      // First, get existing feature
+      const existingQuery = `
+        SELECT 
+          id,
+          properties,
+          ST_AsGeoJSON(geometry)::json as geometry
+        FROM gis_features
+        WHERE id = $1
+      `;
+      
+      const existingResult = await client.query(existingQuery, [id]);
+      
+      if (existingResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return null;
+      }
+
+      const existingFeature = existingResult.rows[0];
+
+      // Merge properties (partial update)
+      let updatedProperties = existingFeature.properties;
       if (properties) {
-        updates.push(`properties = $${paramIndex}`);
-        values.push(JSON.stringify(properties));
-        paramIndex++;
+        updatedProperties = {
+          ...existingFeature.properties,
+          ...properties
+        };
       }
 
-      if (geometry) {
-        updates.push(`geometry = ST_SetSRID(ST_GeomFromGeoJSON($${paramIndex}), 4326)`);
-        values.push(JSON.stringify(geometry));
-        paramIndex++;
-      }
+      // Use existing geometry if not provided
+      const updatedGeometry = geometry || existingFeature.geometry;
 
-      if (updates.length === 0) {
-        throw new Error('No updates provided');
-      }
-
-      updates.push(`updated_at = NOW()`);
-      values.push(id);
-
-      const query = `
+      // Update the feature
+      const updateQuery = `
         UPDATE gis_features
-        SET ${updates.join(', ')}
-        WHERE id = $${paramIndex}
+        SET 
+          properties = $1,
+          geometry = ST_SetSRID(ST_GeomFromGeoJSON($2), 4326),
+          updated_at = NOW()
+        WHERE id = $3
         RETURNING 
           id,
           properties,
           ST_AsGeoJSON(geometry)::json as geometry
       `;
 
-      const result = await db.query(query, values);
+      const result = await client.query(updateQuery, [
+        JSON.stringify(updatedProperties),
+        JSON.stringify(updatedGeometry),
+        id
+      ]);
 
-      if (result.rows.length === 0) return null;
+      await client.query('COMMIT');
 
       const row = result.rows[0];
       return {
@@ -138,7 +158,10 @@ export class GisService {
         geometry: row.geometry
       };
     } catch (error) {
+      await client.query('ROLLBACK');
       throw new Error(`Failed to update feature: ${error}`);
+    } finally {
+      client.release();
     }
   }
 
